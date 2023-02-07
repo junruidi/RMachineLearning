@@ -1,3 +1,3 @@
-# RMachineLearning
-Machine Learning related R codes
-Some edits.
+# R for Machine Learning
+
+R codes (in `tidymodel` and `caret`) to train and fit machine learning (and other general models). 
