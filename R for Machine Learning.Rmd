@@ -1,0 +1,109 @@
+---
+title: "R for Machine Learning"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+    toc: true
+date:  "`r Sys.Date()`"
+---
+
+## 1. `tidymodels` ecosystem
+
+`tidymodels` provide a complete framework for 
+
+* Data resampling, i.e. training and testing split (`resample``)
+
+* Feature engineering (`recipes``)
+
+* Model fitting (`parsnip`)
+
+* Model tuning (`tune` and `dials`)
+
+* Model evaluation (`yardstick`)
+
+## 2. Basic: modeling in `tidyverse`
+
+### 2.1 `tidyverse` modeling workflow
+
+1. Make a __list column__ `nest()`
+
+2. Work with __list columns__ `map()`
+
+`map(.x, .f = ~mean(.x))`
+Can work with `broom`, `Metrics`, `rsample` etc.
+
+
+3. Simplify the __list_columns__ `unnest()`
+
+4. model presentations `broom::tidy()`
+
+ *  `tidy()` for model cofficients
+ 
+ *  `glance()` one row summary of the model, e.g. R^2
+ 
+ *  `augment()` adds prediction column to the original data
+ 
+```{r, cache=TRUE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(tidymodels)
+
+gapminder = readRDS("D:/Dropbox/Coursework/Machine Learning in R/Machine Learning in the Tidyverse/datasets/gapminder.rds")
+
+## Step one is to make a list column based on the grouping variable
+nested <- gapminder %>% group_by(country) %>% nest()
+
+## 1. Example 1) calculating the mean of a column 
+nested %>% 
+  mutate(pop_mean = map(data, ~mean(.x$population))) %>% 
+  unnest(pop_mean)
+
+## 2. Example 2) building a model with map()
+
+### 2.1 Coefficients
+
+lm_reg_coef = nested %>%
+  mutate(model = map(data, ~lm(formula = life_expectancy~year,data = .x))) %>% 
+  mutate(coef = map(model, ~tidy(.x))) %>%
+  unnest(coef)
+
+### 2.2 Summary statistics
+
+lm_reg_inference = nested %>%
+  mutate(model = map(data, ~lm(formula = life_expectancy~year,data = .x))) %>% 
+  mutate(specs = map(model, ~glance(.x))) %>%
+  unnest(specs)
+
+### 2.3 augumented dataframes with predicted values, can directly be used for checking prediction
+
+lm_reg_pred =  nested %>%
+  mutate(model = map(data, ~lm(formula = life_expectancy~year,data = .x))) %>%
+  mutate(augmented = map(model, ~augment(.x))) %>%
+  unnest(augmented)
+
+lm_reg_pred %>% filter(country == "Italy") %>%
+  ggplot(aes(x = year, y = life_expectancy)) +
+  geom_point() +
+  geom_line(aes(y = .fitted), color = "red")
+
+
+
+```
+
+### 2.2 The sampling workfolow
+
+__Test and train split__
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE}
+gap_split = initial_split(gapminder, prop = 0.75)
+training_date = training(gap_split)
+testing_data = testing(gap_split)
+```
+
+__Cross Validation Creation__
+```{r, cache=TRUE, message=FALSE, warning=FALSE}
+cv_split = vfold_cv(training_data, v = 3)
+cv_data = cv_split %>% 
+  mutate(train = map(splits, ~training(.x)),
+         validate = map(splits, ~testing(.x)))
+```
