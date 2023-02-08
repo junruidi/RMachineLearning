@@ -10,6 +10,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+<meta name="author" content="Junrui Di, Ph.D." />
 
 <meta name="date" content="2023-02-07" />
 
@@ -149,6 +150,7 @@ code span.ot { color: #007020; }
 <section class="page-header">
 <h1 class="title toc-ignore project-name"><code>Tidyverse</code> Way of
 Statistical Modeling and Machine Learning</h1>
+<h4 class="author project-author">Junrui Di, Ph.D.</h4>
 <h4 class="date project-date">2023-02-07</h4>
 </section>
 
@@ -179,6 +181,9 @@ using <code>tidyverse</code></a></li>
 <!-- * Model evaluation (`yardstick`) -->
 <div id="basic-modeling-in-tidyverse" class="section level2">
 <h2>1. Basic: modeling in <code>tidyverse</code></h2>
+<p>Before even going to <code>tidymodel</code>, the
+<code>tidyverse</code> packages provide ways to streamline fitting
+common statistical models.</p>
 <div id="tidyverse-modeling-workflow" class="section level3">
 <h3>1.1 <code>tidyverse</code> modeling workflow</h3>
 <ol style="list-style-type: decimal">
@@ -194,7 +199,7 @@ using <code>tidyverse</code></a></li>
 <li><p>model presentations <code>broom::tidy()</code></p></li>
 </ol>
 <ul>
-<li><p><code>tidy()</code> for model cofficients</p></li>
+<li><p><code>tidy()</code> for model coefficients</p></li>
 <li><p><code>glance()</code> one row summary of the model,
 e.g. R^2</p></li>
 <li><p><code>augment()</code> adds prediction column to the original
@@ -297,6 +302,47 @@ data</p></li>
 </div>
 <div id="a-random-forest-model-using-tidyverse" class="section level3">
 <h3>1.3 A Random Forest Model using <code>tidyverse</code></h3>
+<p><strong>Fit an RF in <code>ranger</code> with no tuning</strong></p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ranger)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>cv_models_rf <span class="ot">=</span> cv_data <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a> <span class="fu">mutate</span>(<span class="at">model =</span> <span class="fu">map</span>(train, <span class="sc">~</span><span class="fu">ranger</span>(<span class="at">formula =</span> life_expectancy<span class="sc">~</span>.,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">data =</span> .x, <span class="at">seed =</span> <span class="dv">42</span>)))</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>cv_prep_rf <span class="ot">=</span> cv_models_rf <span class="sc">%&gt;%</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a> <span class="fu">mutate</span>(<span class="at">validate_predicted =</span> <span class="fu">map2</span>(model, validate,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>                                  <span class="sc">~</span><span class="fu">predict</span>(.x, .y)<span class="sc">$</span>predictions))</span></code></pre></div>
+<p><strong>Fit an RF in <code>ranger</code> with hyper parameter
+tuning</strong></p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>cv_tune <span class="ot">=</span> cv_data <span class="sc">%&gt;%</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">crossing</span>(<span class="at">mtry =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(cv_tune)</span></code></pre></div>
+<pre><code>## # A tibble: 6 × 5
+##   splits              id    train                validate              mtry
+##   &lt;list&gt;              &lt;chr&gt; &lt;list&gt;               &lt;list&gt;               &lt;int&gt;
+## 1 &lt;split [2002/1001]&gt; Fold1 &lt;tibble [2,002 × 7]&gt; &lt;tibble [1,001 × 7]&gt;     1
+## 2 &lt;split [2002/1001]&gt; Fold1 &lt;tibble [2,002 × 7]&gt; &lt;tibble [1,001 × 7]&gt;     2
+## 3 &lt;split [2002/1001]&gt; Fold1 &lt;tibble [2,002 × 7]&gt; &lt;tibble [1,001 × 7]&gt;     3
+## 4 &lt;split [2002/1001]&gt; Fold1 &lt;tibble [2,002 × 7]&gt; &lt;tibble [1,001 × 7]&gt;     4
+## 5 &lt;split [2002/1001]&gt; Fold1 &lt;tibble [2,002 × 7]&gt; &lt;tibble [1,001 × 7]&gt;     5
+## 6 &lt;split [2002/1001]&gt; Fold2 &lt;tibble [2,002 × 7]&gt; &lt;tibble [1,001 × 7]&gt;     1</code></pre>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>cv_model_tunerf <span class="ot">=</span> cv_tune <span class="sc">%&gt;%</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">model =</span> <span class="fu">map2</span>(train, mtry, <span class="sc">~</span><span class="fu">ranger</span>(<span class="at">formula =</span> life_expectancy<span class="sc">~</span>.,<span class="at">data =</span> .x, <span class="at">mtry =</span> .y))) <span class="sc">%&gt;%</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">validate_predicted =</span> <span class="fu">map2</span>(model, validate, <span class="sc">~</span><span class="fu">predict</span>(.x, .y)<span class="sc">$</span>predictions),</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">validate_actual =</span> <span class="fu">map</span>(validate, <span class="sc">~</span>.x<span class="sc">$</span>life_expectancy)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">validate_mae =</span> <span class="fu">map2_dbl</span>(validate_actual, validate_predicted,<span class="sc">~</span><span class="fu">mae</span>(<span class="at">actual =</span> .x, <span class="at">predicted =</span> .y)))</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(cv_model_tunerf)</span></code></pre></div>
+<pre><code>## # A tibble: 6 × 9
+##   splits              id    train    validate  mtry model    validate_…¹ valid…²
+##   &lt;list&gt;              &lt;chr&gt; &lt;list&gt;   &lt;list&gt;   &lt;int&gt; &lt;list&gt;   &lt;list&gt;      &lt;list&gt; 
+## 1 &lt;split [2002/1001]&gt; Fold1 &lt;tibble&gt; &lt;tibble&gt;     1 &lt;ranger&gt; &lt;dbl&gt;       &lt;dbl&gt;  
+## 2 &lt;split [2002/1001]&gt; Fold1 &lt;tibble&gt; &lt;tibble&gt;     2 &lt;ranger&gt; &lt;dbl&gt;       &lt;dbl&gt;  
+## 3 &lt;split [2002/1001]&gt; Fold1 &lt;tibble&gt; &lt;tibble&gt;     3 &lt;ranger&gt; &lt;dbl&gt;       &lt;dbl&gt;  
+## 4 &lt;split [2002/1001]&gt; Fold1 &lt;tibble&gt; &lt;tibble&gt;     4 &lt;ranger&gt; &lt;dbl&gt;       &lt;dbl&gt;  
+## 5 &lt;split [2002/1001]&gt; Fold1 &lt;tibble&gt; &lt;tibble&gt;     5 &lt;ranger&gt; &lt;dbl&gt;       &lt;dbl&gt;  
+## 6 &lt;split [2002/1001]&gt; Fold2 &lt;tibble&gt; &lt;tibble&gt;     1 &lt;ranger&gt; &lt;dbl&gt;       &lt;dbl&gt;  
+## # … with 1 more variable: validate_mae &lt;dbl&gt;, and abbreviated variable names
+## #   ¹​validate_predicted, ²​validate_actual</code></pre>
 </div>
 </div>
 </section>
