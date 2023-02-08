@@ -1,5 +1,5 @@
 ---
-title: "Tidyverse Way of Statistical Modeling and Machine Learning"
+title: "`Tidyverse` Way of Statistical Modeling and Machine Learning"
 output:
   prettydoc::html_pretty:
     theme: cayman
