@@ -139,7 +139,7 @@ cv_eval_lm <- cv_prep_lm %>%
 cv_eval_lm
 ```
 
-### 1.3 A Random Forest Model using `tidyverse`
+### 1.3 A Random Forest model using `tidyverse`
 
 __Fit an RF in `ranger` with no tuning__
 
@@ -170,3 +170,5 @@ cv_model_tunerf = cv_tune %>%
 
 head(cv_model_tunerf)
 ```
+
+### 1.4 A logistic regression model using `tidyverse`

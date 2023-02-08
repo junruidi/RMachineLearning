@@ -7,4 +7,4 @@ The `tidyverse` and `tidymodel` frames make model training, prediction, interpre
 This repo contains tutorials with R codes to fully take advantages of the frameworks for statstical models and machine learning. 
 
 
-Tutorial can be found [here](https://htmlpreview.github.io/?https://github.com/junruidi/RMachineLearning/blob/main/R-for-Machine-Learning.html)
+Tutorial can be found [here](https://junruidi.github.io/RMachineLearning/R-for-Machine-Learning.html)
