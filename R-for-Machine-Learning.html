@@ -13,7 +13,7 @@
 
 <meta name="date" content="2023-02-07" />
 
-<title>xxx</title>
+<title>Tidyverse Way of Statistical Modeling and Machine Learning</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -147,7 +147,8 @@ code span.ot { color: #007020; }
 
 
 <section class="page-header">
-<h1 class="title toc-ignore project-name">xxx</h1>
+<h1 class="title toc-ignore project-name">Tidyverse Way of Statistical
+Modeling and Machine Learning</h1>
 <h4 class="date project-date">2023-02-07</h4>
 </section>
 
@@ -155,8 +156,6 @@ code span.ot { color: #007020; }
 <div id="TOC" class="toc">
 <div class="toc-box">
 <ul>
-<li><a href="#add-something-new-why-not-work" id="toc-add-something-new-why-not-work">add something new, why not
-work</a></li>
 <li><a href="#tidymodels-ecosystem" id="toc-tidymodels-ecosystem">1.
 <code>tidymodels</code> ecosystem</a></li>
 <li><a href="#basic-modeling-in-tidyverse" id="toc-basic-modeling-in-tidyverse">2. Basic: modeling in
@@ -171,9 +170,6 @@ workflow</a></li>
 </div>
 
 <section class="main-content">
-<div id="add-something-new-why-not-work" class="section level3">
-<h3>add something new, why not work</h3>
-</div>
 <div id="tidymodels-ecosystem" class="section level2">
 <h2>1. <code>tidymodels</code> ecosystem</h2>
 <p><code>tidymodels</code> provide a complete framework for</p>
@@ -212,7 +208,7 @@ data</p></li>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidymodels)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>gapminder <span class="ot">=</span> <span class="fu">readRDS</span>(<span class="st">&quot;~/Dropbox/Coursework/Machine Learning in R/Machine Learning in the Tidyverse/datasets/gapminder.rds&quot;</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>gapminder <span class="ot">=</span> <span class="fu">readRDS</span>(<span class="st">&quot;D:/Dropbox/Coursework/Machine Learning in R/Machine Learning in the Tidyverse/datasets/gapminder.rds&quot;</span>)</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="do">## Step one is to make a list column based on the grouping variable</span></span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>nested <span class="ot">&lt;-</span> gapminder <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(country) <span class="sc">%&gt;%</span> <span class="fu">nest</span>()</span>
