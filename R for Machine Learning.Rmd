@@ -47,11 +47,11 @@ Can work with `broom`, `Metrics`, `rsample` etc.
  
  *  `augment()` adds prediction column to the original data
  
-```{r, cache=TRUE, message=FALSE, warning=FALSE}
+```{r,  message=FALSE, warning=FALSE}
 library(tidyverse)
 library(tidymodels)
 
-gapminder = readRDS("D:/Dropbox/Coursework/Machine Learning in R/Machine Learning in the Tidyverse/datasets/gapminder.rds")
+gapminder = readRDS("~/Dropbox/Coursework/Machine Learning in R/Machine Learning in the Tidyverse/datasets/gapminder.rds")
 
 ## Step one is to make a list column based on the grouping variable
 nested <- gapminder %>% group_by(country) %>% nest()
@@ -97,14 +97,14 @@ lm_reg_pred %>% filter(country == "Italy") %>%
 
 __Test and train split__
 
-```{r, cache=TRUE, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE}
 gap_split = initial_split(gapminder, prop = 0.75)
 training_date = training(gap_split)
 testing_data = testing(gap_split)
 ```
 
 __Cross Validation Creation__
-```{r, cache=TRUE, message=FALSE, warning=FALSE}
+```{r,  message=FALSE, warning=FALSE}
 cv_split = vfold_cv(training_data, v = 3)
 cv_data = cv_split %>% 
   mutate(train = map(splits, ~training(.x)),
