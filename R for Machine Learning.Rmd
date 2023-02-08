@@ -1,5 +1,5 @@
 ---
-title: "R for Machine Learning"
+title: "Modern R for Machine Learning and Statistical Modeling"
 output:
   prettydoc::html_pretty:
     theme: cayman
