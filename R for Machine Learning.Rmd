@@ -8,24 +8,32 @@ output:
 date:  "`r Sys.Date()`"
 ---
 
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  cache = TRUE
+)
+```
 
-## 1. `tidymodels` ecosystem
 
-`tidymodels` provide a complete framework for 
+<!-- ## 1. `tidymodels` ecosystem -->
 
-* Data resampling, i.e. training and testing split (`resample``)
+<!-- `tidymodels` provide a complete framework for  -->
 
-* Feature engineering (`recipes``)
+<!-- * Data resampling, i.e. training and testing split (`resample``) -->
 
-* Model fitting (`parsnip`)
+<!-- * Feature engineering (`recipes``) -->
 
-* Model tuning (`tune` and `dials`)
+<!-- * Model fitting (`parsnip`) -->
 
-* Model evaluation (`yardstick`)
+<!-- * Model tuning (`tune` and `dials`) -->
 
-## 2. Basic: modeling in `tidyverse`
+<!-- * Model evaluation (`yardstick`) -->
 
-### 2.1 `tidyverse` modeling workflow
+## 1. Basic: modeling in `tidyverse`
+
+### 1.1 `tidyverse` modeling workflow
 
 1. Make a __list column__ `nest()`
 
@@ -45,11 +53,11 @@ Can work with `broom`, `Metrics`, `rsample` etc.
  
  *  `augment()` adds prediction column to the original data
  
-```{r, cache=TRUE, message=FALSE, warning=FALSE}
+```{r}
 library(tidyverse)
 library(tidymodels)
 
-gapminder = readRDS("D:/Dropbox/Coursework/Machine Learning in R/Machine Learning in the Tidyverse/datasets/gapminder.rds")
+gapminder = readRDS("~/Dropbox/Coursework/Machine Learning in R/Machine Learning in the Tidyverse/datasets/gapminder.rds")
 
 ## Step one is to make a list column based on the grouping variable
 nested <- gapminder %>% group_by(country) %>% nest()
@@ -91,22 +99,40 @@ lm_reg_pred %>% filter(country == "Italy") %>%
 
 ```
 
-### 2.2 The sampling workfolow
+### 1.2 The sampling workfolow
 
 __Test and train split__
 
-```{r, cache=TRUE, message=FALSE, warning=FALSE}
+```{r }
 gap_split = initial_split(gapminder, prop = 0.75)
-training_date = training(gap_split)
+training_data = training(gap_split)
 testing_data = testing(gap_split)
 ```
 
-__Cross Validation Creation__
-```{r, cache=TRUE, message=FALSE, warning=FALSE}
+__Cross Validation Creation and performance__
+```{r cv}
+library(Metrics)
+
+## Create the CV splits as columns of a tibble
 cv_split = vfold_cv(training_data, v = 3)
 cv_data = cv_split %>% 
   mutate(train = map(splits, ~training(.x)),
          validate = map(splits, ~testing(.x)))
+
+## Train a model in the training sets
+cv_models_lm = cv_data %>%
+  mutate(model = map(train, ~lm(formula = life_expectancy~., data = .x)))
+
+## Prediction for the testing set
+cv_prep_lm = cv_models_lm %>%
+  mutate(validate_actual = map(validate, ~.x$life_expectancy),
+         validate_predicted = map2(model, validate, ~predict(.x, .y)))
+
+
+cv_eval_lm <- cv_prep_lm %>%
+  mutate(validate_mae = map2_dbl(validate_actual, validate_predicted,
+                                ~mae(actual = .x, predicted = .y)))
+cv_eval_lm
 ```
 
-### 2.3 new features
+### 1.3 A Random Forest Model using `tidyverse`
