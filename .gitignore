@@ -44,4 +44,7 @@ vignettes/*.pdf
 R-for-Machine-Learning_cache/
 
 # files folders
-R-for-Machine-Learning_files/*
+R-for-Machine-Learning_files/figure-html
+R-for-Machine-Learning_files/fonts
+R-for-Machine-Learning_files/images
+R-for-Machine-Learning_files/style.css
