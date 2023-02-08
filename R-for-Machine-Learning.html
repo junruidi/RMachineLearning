@@ -164,6 +164,8 @@ Statistical Modeling and Machine Learning</h1>
 <li><a href="#tidyverse-modeling-workflow" id="toc-tidyverse-modeling-workflow">2.1 <code>tidyverse</code> modeling
 workflow</a></li>
 <li><a href="#the-sampling-workfolow" id="toc-the-sampling-workfolow">2.2 The sampling workfolow</a></li>
+<li><a href="#new-features" id="toc-new-features">2.3 new
+features</a></li>
 </ul></li>
 </ul>
 </div>
@@ -272,6 +274,9 @@ data</p></li>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>cv_data <span class="ot">=</span> cv_split <span class="sc">%&gt;%</span> </span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">train =</span> <span class="fu">map</span>(splits, <span class="sc">~</span><span class="fu">training</span>(.x)),</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">validate =</span> <span class="fu">map</span>(splits, <span class="sc">~</span><span class="fu">testing</span>(.x)))</span></code></pre></div>
+</div>
+<div id="new-features" class="section level3">
+<h3>2.3 new features</h3>
 </div>
 </div>
 </section>

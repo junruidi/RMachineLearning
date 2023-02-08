@@ -108,3 +108,5 @@ cv_data = cv_split %>%
   mutate(train = map(splits, ~training(.x)),
          validate = map(splits, ~testing(.x)))
 ```
+
+### 2.3 new features
