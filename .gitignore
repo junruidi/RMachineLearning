@@ -37,3 +37,9 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+
+# cached folders
+
+R-for-Machine-Learning_cache/
+R-for-Machine-Learning_files/
