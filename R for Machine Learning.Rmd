@@ -1,10 +1,17 @@
 ---
-title: "`Tidyverse` Way of Statistical Modeling and Machine Learning"
+title: "Statistical Modeling and Machine Learning in R"
+# output:
+#   prettydoc::html_pretty:
+#     theme: cayman
+#     highlight: github
+#     toc: true
 output:
-  prettydoc::html_pretty:
-    theme: cayman
-    highlight: github
-    toc: true
+  rmdformats::readthedown:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: false
+    toc_depth: 3
 date:  "`r Sys.Date()`"
 author: Junrui Di, Ph.D.
 ---
@@ -32,7 +39,7 @@ knitr::opts_chunk$set(
 
 <!-- * Model evaluation (`yardstick`) -->
 
-## 1. Basic: modeling in `tidyverse`
+## 1. Basic modeling in `tidyverse`
 
 Before even going to `tidymodel`, the `tidyverse` packages provide ways to streamline fitting common statistical models.
 
@@ -103,7 +110,7 @@ lm_reg_pred %>% filter(country == "Italy") %>%
 
 ```
 
-### 1.2 The sampling workfolow
+### 1.2 The sampling workflow
 
 __Test and train split__
 
@@ -139,7 +146,7 @@ cv_eval_lm <- cv_prep_lm %>%
 cv_eval_lm
 ```
 
-### 1.3 A Random Forest model using `tidyverse`
+### 1.3 A Random Forest model using `tidyverse` for __regression__
 
 __Fit an RF in `ranger` with no tuning__
 
@@ -169,6 +176,78 @@ cv_model_tunerf = cv_tune %>%
   mutate(validate_mae = map2_dbl(validate_actual, validate_predicted,~mae(actual = .x, predicted = .y)))
 
 head(cv_model_tunerf)
+
+knitr::kable(cv_model_tunerf %>% 
+  group_by(mtry) %>% 
+  summarise(mean_mae = mean(validate_mae)))
 ```
 
-### 1.4 A logistic regression model using `tidyverse`
+### 1.4 A logistic regression model using `tidyverse` for __classification__
+
+```{r logtune}
+attrtion = readRDS("~/Dropbox/Coursework/Machine Learning in R/Machine Learning in the Tidyverse/datasets/attrition.rds")
+
+attrtion_split = initial_split(attrtion, prop = 0.75)
+training_data = training(attrtion_split)
+testing_data = testing(attrtion_split)
+
+cv_split = vfold_cv(training_data, v = 5)
+cv_data = cv_split %>% 
+  mutate(train = map(splits, ~training(.x)),
+         validate = map(splits, ~testing(.x)))
+
+
+cv_models_lr = cv_data %>%
+  mutate(model = map(train, ~glm(formula = Attrition~.,
+                                 data = .x, family = "binomial")))
+
+cv_models_lr_pred = cv_models_lr %>% 
+  mutate(
+    # Prepare binary vector of actual Attrition values in validate
+    validate_actual = map(validate, ~.x$Attrition == "Yes"),
+    # Prepare binary vector of predicted Attrition values for validate
+    validate_predicted = map2(.x = model, .y = validate, ~predict(.x, .y, type = "response")> 0.5 )
+  ) %>%
+  mutate(
+    # Calculate accurarcy
+    Accuracy = map2(.x =validate_actual, .y = validate_predicted,  ~accuracy(.x,.y)),
+    Recall = map2(.x =validate_actual, .y = validate_predicted,  ~recall(.x,.y))
+  ) %>%
+  unnest(Accuracy) %>%
+  unnest(Recall)
+  
+
+knitr::kable(cv_models_lr_pred %>% select(id, Accuracy, Recall))
+```
+
+### 1.5 A Random Forest model using `tidyverse` for __classification__
+
+
+```{r rfclasstune}
+cv_tune =cv_data %>%
+  crossing(mtry = c(2, 4, 8, 16))
+
+
+cv_models_rf = cv_tune %>%
+  mutate(model = map2(train, mtry, ~ranger(formula = Attrition~.,
+                                           data = .x, mtry = .y,
+                                           num.trees = 100, seed = 42)))
+cv_models_rf_pred = cv_models_rf %>% 
+  mutate(
+    # Prepare binary vector of actual Attrition values in validate
+    validate_actual = map(validate, ~.x$Attrition == "Yes"),
+    # Prepare binary vector of predicted Attrition values for validate
+    validate_predicted = map2(.x = model, .y = validate, ~predict(.x, .y)$predictions == "Yes" )
+  ) %>%
+  mutate(
+    # Calculate accurarcy
+    Accuracy = map2(.x =validate_actual, .y = validate_predicted,  ~accuracy(.x,.y)),
+    Recall = map2(.x =validate_actual, .y = validate_predicted,  ~recall(.x,.y))
+  ) %>%
+  unnest(Accuracy) %>%
+  unnest(Recall)
+  
+
+knitr::kable(cv_models_rf_pred %>% select(mtry, Accuracy, Recall) %>% 
+               group_by(mtry) %>% summarise_all(mean))
+```
