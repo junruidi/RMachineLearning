@@ -1,5 +1,5 @@
 ---
-title: "Statistical Modeling and Machine Learning in R"
+title: "Streamlined Machine Learning Modeling in R"
 # output:
 #   prettydoc::html_pretty:
 #     theme: cayman
@@ -174,8 +174,6 @@ cv_model_tunerf = cv_tune %>%
   mutate(validate_predicted = map2(model, validate, ~predict(.x, .y)$predictions),
           validate_actual = map(validate, ~.x$life_expectancy)) %>%
   mutate(validate_mae = map2_dbl(validate_actual, validate_predicted,~mae(actual = .x, predicted = .y)))
-
-head(cv_model_tunerf)
 
 knitr::kable(cv_model_tunerf %>% 
   group_by(mtry) %>% 
