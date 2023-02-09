@@ -249,3 +249,31 @@ cv_models_rf_pred = cv_models_rf %>%
 knitr::kable(cv_models_rf_pred %>% select(mtry, Accuracy, Recall) %>% 
                group_by(mtry) %>% summarise_all(mean))
 ```
+
+
+## 2. Supervised mdoeling framework in `tidymodels`
+
+**`tidymodels` roadmap**
+![](fig/tidymodels.png)
+* Taken from DataCamp
+
+
+### 2.1 Linear regression
+
+
+### 2.2 Classification
+
+
+### 2.3 Feature engineering
+
+
+### 2.4 Machine learning workflow
+
+
+
+## 3. Tree-based models in `tidymodels`
+
+
+## 4. Machine learning with `caret`
+
+## 5. Hyper parameter tuning with `caret`
