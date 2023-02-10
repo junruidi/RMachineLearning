@@ -829,18 +829,32 @@ best_params =  select_best(tune_results)
 final_spec =  finalize_model(boost_spec,
                              best_params)
 
-# 7. Train the final model
-final_model = final_spec %>% fit(formula = purchased ~ .,
-                                 data = leads_training)
+# # 7. Train the final model
+# final_model = final_spec %>% fit(formula = purchased ~ .,
+#                                  data = leads_training)
+# 
+# # 8. Testing prediction
+# predictions = predict(final_model,leads_test, type = "class") %>%
+#   bind_cols(leads_test) %>% 
+#   
+# 
+# predictions = leads_test %>% select(purchased) %>%
+#   bind_cols(predict(final_model,leads_test, type = "class"),
+#             predict(final_model,leads_test, type = "prob"))
 
-# 8. Testing prediction
-predictions = predict(final_model,leads_test, type = "class") %>%
-  bind_cols(leads_test) %>% 
-  
+# 7. The streamelined approahc
+best_params =  select_best(tune_results)
+final_spec =  finalize_model(boost_spec,
+                             best_params)
 
-predictions = leads_test %>% select(purchased) %>%
-  bind_cols(predict(final_model,leads_test, type = "class"),
-            predict(final_model,leads_test, type = "prob"))
+
+final_fit = final_spec %>%
+  last_fit(purchased ~ .,
+    split = leads_split)
+
+final_fit %>% collect_metrics()
+final_fit %>% collect_predictions() 
+
 
 ```
 

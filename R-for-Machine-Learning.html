@@ -2522,18 +2522,31 @@ tuned</strong></p>
 <span id="cb88-36"><a href="#cb88-36" aria-hidden="true" tabindex="-1"></a>final_spec <span class="ot">=</span>  <span class="fu">finalize_model</span>(boost_spec,</span>
 <span id="cb88-37"><a href="#cb88-37" aria-hidden="true" tabindex="-1"></a>                             best_params)</span>
 <span id="cb88-38"><a href="#cb88-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb88-39"><a href="#cb88-39" aria-hidden="true" tabindex="-1"></a><span class="co"># 7. Train the final model</span></span>
-<span id="cb88-40"><a href="#cb88-40" aria-hidden="true" tabindex="-1"></a>final_model <span class="ot">=</span> final_spec <span class="sc">%&gt;%</span> <span class="fu">fit</span>(<span class="at">formula =</span> purchased <span class="sc">~</span> .,</span>
-<span id="cb88-41"><a href="#cb88-41" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">data =</span> leads_training)</span>
-<span id="cb88-42"><a href="#cb88-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb88-43"><a href="#cb88-43" aria-hidden="true" tabindex="-1"></a><span class="co"># 8. Testing prediction</span></span>
-<span id="cb88-44"><a href="#cb88-44" aria-hidden="true" tabindex="-1"></a>predictions <span class="ot">=</span> <span class="fu">predict</span>(final_model,leads_test, <span class="at">type =</span> <span class="st">&quot;class&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb88-45"><a href="#cb88-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(leads_test) <span class="sc">%&gt;%</span> </span>
-<span id="cb88-46"><a href="#cb88-46" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb88-47"><a href="#cb88-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb88-48"><a href="#cb88-48" aria-hidden="true" tabindex="-1"></a>predictions <span class="ot">=</span> leads_test <span class="sc">%&gt;%</span> <span class="fu">select</span>(purchased) <span class="sc">%&gt;%</span></span>
-<span id="cb88-49"><a href="#cb88-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(<span class="fu">predict</span>(final_model,leads_test, <span class="at">type =</span> <span class="st">&quot;class&quot;</span>),</span>
-<span id="cb88-50"><a href="#cb88-50" aria-hidden="true" tabindex="-1"></a>            <span class="fu">predict</span>(final_model,leads_test, <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>))</span></code></pre></div>
+<span id="cb88-39"><a href="#cb88-39" aria-hidden="true" tabindex="-1"></a><span class="co"># # 7. Train the final model</span></span>
+<span id="cb88-40"><a href="#cb88-40" aria-hidden="true" tabindex="-1"></a><span class="co"># final_model = final_spec %&gt;% fit(formula = purchased ~ .,</span></span>
+<span id="cb88-41"><a href="#cb88-41" aria-hidden="true" tabindex="-1"></a><span class="co">#                                  data = leads_training)</span></span>
+<span id="cb88-42"><a href="#cb88-42" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb88-43"><a href="#cb88-43" aria-hidden="true" tabindex="-1"></a><span class="co"># # 8. Testing prediction</span></span>
+<span id="cb88-44"><a href="#cb88-44" aria-hidden="true" tabindex="-1"></a><span class="co"># predictions = predict(final_model,leads_test, type = &quot;class&quot;) %&gt;%</span></span>
+<span id="cb88-45"><a href="#cb88-45" aria-hidden="true" tabindex="-1"></a><span class="co">#   bind_cols(leads_test) %&gt;% </span></span>
+<span id="cb88-46"><a href="#cb88-46" aria-hidden="true" tabindex="-1"></a><span class="co">#   </span></span>
+<span id="cb88-47"><a href="#cb88-47" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb88-48"><a href="#cb88-48" aria-hidden="true" tabindex="-1"></a><span class="co"># predictions = leads_test %&gt;% select(purchased) %&gt;%</span></span>
+<span id="cb88-49"><a href="#cb88-49" aria-hidden="true" tabindex="-1"></a><span class="co">#   bind_cols(predict(final_model,leads_test, type = &quot;class&quot;),</span></span>
+<span id="cb88-50"><a href="#cb88-50" aria-hidden="true" tabindex="-1"></a><span class="co">#             predict(final_model,leads_test, type = &quot;prob&quot;))</span></span>
+<span id="cb88-51"><a href="#cb88-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb88-52"><a href="#cb88-52" aria-hidden="true" tabindex="-1"></a><span class="co"># 7. The streamelined approahc</span></span>
+<span id="cb88-53"><a href="#cb88-53" aria-hidden="true" tabindex="-1"></a>best_params <span class="ot">=</span>  <span class="fu">select_best</span>(tune_results)</span>
+<span id="cb88-54"><a href="#cb88-54" aria-hidden="true" tabindex="-1"></a>final_spec <span class="ot">=</span>  <span class="fu">finalize_model</span>(boost_spec,</span>
+<span id="cb88-55"><a href="#cb88-55" aria-hidden="true" tabindex="-1"></a>                             best_params)</span>
+<span id="cb88-56"><a href="#cb88-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb88-57"><a href="#cb88-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb88-58"><a href="#cb88-58" aria-hidden="true" tabindex="-1"></a>final_fit <span class="ot">=</span> final_spec <span class="sc">%&gt;%</span></span>
+<span id="cb88-59"><a href="#cb88-59" aria-hidden="true" tabindex="-1"></a>  <span class="fu">last_fit</span>(purchased <span class="sc">~</span> .,</span>
+<span id="cb88-60"><a href="#cb88-60" aria-hidden="true" tabindex="-1"></a>    <span class="at">split =</span> leads_split)</span>
+<span id="cb88-61"><a href="#cb88-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb88-62"><a href="#cb88-62" aria-hidden="true" tabindex="-1"></a>final_fit <span class="sc">%&gt;%</span> <span class="fu">collect_metrics</span>()</span>
+<span id="cb88-63"><a href="#cb88-63" aria-hidden="true" tabindex="-1"></a>final_fit <span class="sc">%&gt;%</span> <span class="fu">collect_predictions</span>() </span></code></pre></div>
 </div>
 </div>
 </div>
