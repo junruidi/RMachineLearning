@@ -24,7 +24,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-
 <!-- ## 1. `tidymodels` ecosystem -->
 
 <!-- `tidymodels` provide a complete framework for  -->
@@ -43,27 +42,24 @@ knitr::opts_chunk$set(
 
 Before even going to `tidymodel`, the `tidyverse` packages provide ways to streamline fitting common statistical models.
 
-
 ### 1.1 `tidyverse` modeling workflow
 
-1. Make a __list column__ `nest()`
+1.  Make a **list column** `nest()`
 
-2. Work with __list columns__ `map()`
+2.  Work with **list columns** `map()`
 
-`map(.x, .f = ~mean(.x))`
-Can work with `broom`, `Metrics`, `rsample` etc.
+`map(.x, .f = ~mean(.x))` Can work with `broom`, `Metrics`, `rsample` etc.
 
+3.  Simplify the **list_columns** `unnest()`
 
-3. Simplify the __list_columns__ `unnest()`
+4.  model presentations `broom::tidy()`
 
-4. model presentations `broom::tidy()`
+-   `tidy()` for model coefficients
 
- *  `tidy()` for model coefficients
- 
- *  `glance()` one row summary of the model, e.g. R^2
- 
- *  `augment()` adds prediction column to the original data
- 
+-   `glance()` one row summary of the model, e.g. R\^2
+
+-   `augment()` adds prediction column to the original data
+
 ```{r}
 library(tidyverse)
 library(tidymodels)
@@ -71,7 +67,7 @@ library(tidymodels)
 gapminder = readRDS("~/Dropbox/Coursework/Machine Learning in R/Machine Learning in the Tidyverse/datasets/gapminder.rds")
 
 ## Step one is to make a list column based on the grouping variable
-nested <- gapminder %>% group_by(country) %>% nest()
+nested = gapminder %>% group_by(country) %>% nest()
 
 ## 1. Example 1) calculating the mean of a column 
 nested %>% 
@@ -112,7 +108,7 @@ lm_reg_pred %>% filter(country == "Italy") %>%
 
 ### 1.2 The sampling workflow
 
-__Test and train split__
+**Test and train split**
 
 ```{r }
 gap_split = initial_split(gapminder, prop = 0.75)
@@ -120,7 +116,8 @@ training_data = training(gap_split)
 testing_data = testing(gap_split)
 ```
 
-__Cross Validation Creation and performance__
+**Cross Validation Creation and performance**
+
 ```{r cv}
 library(Metrics)
 
@@ -140,15 +137,15 @@ cv_prep_lm = cv_models_lm %>%
          validate_predicted = map2(model, validate, ~predict(.x, .y)))
 
 
-cv_eval_lm <- cv_prep_lm %>%
+cv_eval_lm = cv_prep_lm %>%
   mutate(validate_mae = map2_dbl(validate_actual, validate_predicted,
                                 ~mae(actual = .x, predicted = .y)))
 cv_eval_lm
 ```
 
-### 1.3 A Random Forest model using `tidyverse` for __regression__
+### 1.3 A Random Forest model using `tidyverse` for **regression**
 
-__Fit an RF in `ranger` with no tuning__
+**Fit an RF in `ranger` with no tuning**
 
 ```{r rfnotune}
 library(ranger)
@@ -161,8 +158,7 @@ cv_prep_rf = cv_models_rf %>%
                                   ~predict(.x, .y)$predictions))
 ```
 
-
-__Fit an RF in `ranger` with hyper parameter tuning__
+**Fit an RF in `ranger` with hyper parameter tuning**
 
 ```{r rftune}
 cv_tune = cv_data %>%
@@ -180,7 +176,7 @@ knitr::kable(cv_model_tunerf %>%
   summarise(mean_mae = mean(validate_mae)))
 ```
 
-### 1.4 A logistic regression model using `tidyverse` for __classification__
+### 1.4 A logistic regression model using `tidyverse` for **classification**
 
 ```{r logtune}
 attrtion = readRDS("~/Dropbox/Coursework/Machine Learning in R/Machine Learning in the Tidyverse/datasets/attrition.rds")
@@ -218,8 +214,7 @@ cv_models_lr_pred = cv_models_lr %>%
 knitr::kable(cv_models_lr_pred %>% select(id, Accuracy, Recall))
 ```
 
-### 1.5 A Random Forest model using `tidyverse` for __classification__
-
+### 1.5 A Random Forest model using `tidyverse` for **classification**
 
 ```{r rfclasstune}
 cv_tune =cv_data %>%
@@ -250,29 +245,604 @@ knitr::kable(cv_models_rf_pred %>% select(mtry, Accuracy, Recall) %>%
                group_by(mtry) %>% summarise_all(mean))
 ```
 
-
 ## 2. Supervised mdoeling framework in `tidymodels`
 
-**`tidymodels` roadmap**
-![](fig/tidymodels.png)
-* Taken from DataCamp
+**`tidymodels` roadmap** ![](fig/tidymodels.png) \* Taken from DataCamp
 
+-   `resampling` splits training and testing
+
+-   `recipes` for feature engineering
+
+-   `parsnip` fits the model with 3 components
+
+    -   model type (linear regression, e.g.)
+    -   engine (r packages)
+    -   mode (regression or classification)
+
+-   `yarstick` evaluate model performance, i.e metrics functions
 
 ### 2.1 Linear regression
 
+```{r}
+# split training and testing
+mpg_split = initial_split(mpg,prop = 0.75,strata = hwy)
+mpg_training = mpg_split %>% training()
+mpg_test = mpg_split %>% testing()
+```
+
+```{r lm}
+library(tidymodels)
+# Set up the model
+lm_model =  linear_reg() %>%
+  set_engine('lm') %>%
+  set_mode('regression')
+
+# Fit the model
+lm_fit = lm_model %>%
+  fit(hwy ~ cty, data = mpg_training)
+
+# Model coefficients
+tidy(lm_fit)
+
+# Prediction on test data
+mpg_test_results = mpg_test %>%
+  select(hwy, cty) %>%
+  bind_cols(
+    lm_fit %>% predict(new_data = mpg_test)
+    )
+
+# Performance
+mpg_test_results %>% rsq(truth = hwy, estimate = .pred)
+
+
+# Visualization
+ ggplot(mpg_test_results, aes(x = hwy, y = .pred)) +
+  geom_point() +
+  geom_abline(color = 'blue', linetype = 2) +
+  coord_obs_pred() + 
+  labs(title = 'R-Squared Plot',
+       y = 'Predicted Highway MPG',
+       x = 'Actual Highway MPG')
+```
+
+The above procedures can be streamlined with: model specs, formula, and splitting object. **THIS SHOULD BE USED if there is no need to get coefficients.** **Streamlined Approach:**
+
+```{r lmstream}
+lm_last_fit =  lm_model %>%
+  last_fit(hwy ~ cty,
+           split = mpg_split)
+
+lm_last_fit %>% collect_metrics()
+
+lm_last_fit %>% collect_predictions()
+```
 
 ### 2.2 Classification
 
+```{r leaddfdata}
+leads_df = readRDS("~/Dropbox/Coursework/Machine Learning in R/Modeling with tidymodels in R/datasets/leads_df.rds")
+leads_split = initial_split(leads_df,prop = 0.75,strata = purchased)
+leads_training = leads_split %>% training()
+leads_test =  leads_split %>%testing()
+```
+
+```{r logistictidy}
+
+# Set up the model
+logistic_model =  logistic_reg() %>%
+  set_engine('glm') %>%
+  set_mode('classification')
+
+# Fit the model
+logistic_fit = logistic_model %>%
+  fit(purchased ~ total_visits + total_time,
+      data = leads_training)
+
+# Prediction
+class_preds = logistic_fit %>%
+  predict(new_data = leads_test,
+          type = 'class')
+
+prob_preds = logistic_fit %>%
+  predict(new_data = leads_test,
+          type = 'prob')
+
+leads_results = leads_test %>%
+  select(purchased) %>%
+  bind_cols(class_preds, prob_preds)
+```
+
+In `tidymodes` classification model, outcome has to be a `factor` with the positive class being the first level.
+
+```{r classmetrics}
+# Get selected metrics
+custom_metrics = metric_set( sens, spec)
+
+custom_metrics(leads_results,
+               truth = purchased,
+               estimate = .pred_class)
+
+# Get all
+conf_mat(leads_results, truth = purchased,
+         estimate = .pred_class) %>% summary()
+```
+
+```{r}
+# Visualize the conft matrix
+
+conf_mat(leads_results,
+         truth = purchased,
+         estimate = .pred_class) %>%
+  autoplot(type = 'heatmap')
+
+conf_mat(leads_results,
+         truth = purchased,
+         estimate = .pred_class) %>%
+  autoplot(type = 'mosaic')
+```
+
+```{r}
+# ROC
+leads_results %>%
+  roc_curve(truth = purchased, .pred_yes) %>%
+  autoplot()
+
+# AUC
+roc_auc(leads_results,truth = purchased,.pred_yes)
+```
+
+**Streamlined Approach:**
+
+```{r onestopshoplog}
+logistic_last_fit = logistic_model %>%
+  last_fit(purchased ~ total_visits + total_time,
+           split = leads_split)
+logistic_last_fit %>%
+  collect_metrics()
+
+last_fit_results = logistic_last_fit %>%
+  collect_predictions()
+
+conf_mat(last_fit_results, truth = purchased,
+         estimate = .pred_class) %>% summary()
+```
 
 ### 2.3 Feature engineering
 
+`recipe` allows:
+
+-   Define column roles, predictors or outcome
+
+-   Variable data types, numeric or categorical
+
+-   Preprocessing steps `step_*()`
+
+#### 2.3.1 Overall procedure
+
+```{r recipeoverall}
+# Build a recipe
+leads_log_rec = recipe(purchased ~ .,data = leads_training) %>%
+  step_log(total_time, base = 10)
+
+leads_log_rec %>%
+  summary()
+
+# Train based on recipe
+leads_log_rec_prep = leads_log_rec %>% prep(training = leads_training)
+
+# Transform the training data
+leads_log_rec_prep %>%
+  bake(new_data = NULL)
+
+
+# Transform the test data
+leads_log_rec_prep %>%
+  bake(new_data = leads_test)
+```
+
+#### 2.3.2 Treatment of numeric variables
+
+-   Correlated variables
+
+```{r}
+leads_training %>%
+  select_if(is.numeric) %>%
+  cor()
+
+## Highly correlated variables will have one to be removed
+leads_cor_rec = recipe(purchased ~ .,
+                        data = leads_training) %>%
+  step_corr(all_numeric(), -all_outcomes(), threshold = 0.9)
+
+
+processed_train = leads_cor_rec %>%
+  prep(training = leads_training) %>%
+  bake(new_data = NULL)
+
+processed_test = leads_cor_rec %>%
+  prep(training = leads_training) %>%
+  bake(new_data = leads_test)
+```
+
+-   Normalization
+
+```{r}
+leads_norm_rec =  recipe(purchased ~ .,
+                         data = leads_training) %>%
+  step_corr(all_numeric(), -all_outcomes(),threshold = 0.9) %>%
+  step_normalize(all_numeric())
+
+leads_norm_rec %>%
+  prep(training = leads_training) %>%
+  bake(new_data = leads_test)
+```
+
+#### 2.3.3 Treatment of nominal variables
+
+-   Create dummy variable
+
+```{r}
+recipe(purchased ~ ., data = leads_training) %>%
+  step_dummy(all_nominal(), -all_outcomes()) %>%
+  prep(training = leads_training) %>%
+  bake(new_data = leads_test)
+```
 
 ### 2.4 Machine learning workflow
 
+#### 2.4.1 A full picture
+
+**Data resampling**
+
+```{r}
+leads_split = initial_split(leads_df,strata = purchased)
+leads_training = leads_split %>%
+  training()
+leads_test = leads_split %>%
+  testing()
+```
+
+**Model specification**
+
+```{r}
+logistic_model = logistic_reg() %>%
+  set_engine('glm') %>%
+  set_mode('classification')
+```
+
+**Feature engineering**
+
+```{r}
+# Create recipe
+leads_recipe = recipe(purchased ~ .,
+                       data = leads_training) %>%
+  step_corr(all_numeric(), threshold = 0.9) %>%
+  step_normalize(all_numeric()) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Train recipe
+leads_recipe_prep =  leads_recipe %>%
+  prep(training = leads_training)
+
+leads_training_prep = leads_recipe_prep %>%
+  bake(new_data = NULL)
+
+leads_test_prep = leads_recipe_prep %>%
+  bake(new_data = leads_test)
+```
+
+**Model fitting and prediction**
+
+```{r}
+logistic_fit = logistic_model %>%
+  fit(purchased ~ .,
+      data = leads_training_prep)
+class_preds = predict(logistic_fit,
+                       new_data = leads_test_prep,
+                       type = 'class')
+prob_preds = predict(logistic_fit,
+                      new_data = leads_test_prep,
+                      type = 'prob')
+leads_results = leads_test %>%
+  select(purchased) %>%
+  bind_cols(class_preds, prob_preds)
+```
+
+**Model evaluation**
+
+```{r}
+leads_results %>%
+  conf_mat(truth = purchased,
+           estimate = .pred_class) %>% summary()
+
+roc_auc(leads_results,truth = purchased,.pred_yes)
+```
+
+#### 2.4.2 A decision tree example to combine model and recipe
+
+```{r}
+dt_model = decision_tree() %>%
+  set_engine('rpart') %>%
+  set_mode('classification')
+
+leads_recipe = recipe(purchased ~ .,
+                       data = leads_training) %>%
+  step_corr(all_numeric(), threshold = 0.9) %>%
+  step_normalize(all_numeric()) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+```
+
+**Combine model and recipes**
+
+```{r}
+# Create the workflow
+leads_wkfl = workflow() %>%
+  add_model(dt_model) %>%
+  add_recipe(leads_recipe)
+leads_wkfl
+
+# Fit the model using the streamline way
+leads_wkfl_fit = leads_wkfl %>%
+  last_fit(split = leads_split)
+
+leads_wkfl_fit %>%
+  collect_metrics()
+
+leads_wkfl_preds = leads_wkfl_fit %>%
+  collect_predictions()
+leads_wkfl_preds
+
+# Evaluation
+leads_metrics = metric_set(roc_auc, sens, spec)
+leads_wkfl_preds %>%
+  leads_metrics(truth = purchased,
+                estimate = .pred_class,
+                .pred_yes)
+```
+
+#### 2.4.3 Cross validation
+
+```{r}
+set.seed(214)
+leads_folds = vfold_cv(leads_training,
+                        v = 10,
+                        strata = purchased)
+
+leads_rs_fit = leads_wkfl %>%
+  fit_resamples(resamples = leads_folds,
+                metrics = leads_metrics)
+
+## Or:
+# leads_rs_fit =  fit_resamples(
+#   dt_model,
+#   purchased ~ .,
+#   resamples = leads_folds,
+#   metrics = leads_metrics)
 
 
-## 3. Tree-based models in `tidymodels`
+# Get the mean across CVs
+leads_rs_fit %>%
+  collect_metrics()
 
+# Get the metrics for each CV
+rs_metrics = leads_rs_fit %>%
+  collect_metrics(summarize = FALSE)
+
+rs_metrics %>%
+  group_by(.metric) %>%
+  summarize(min = min(.estimate),
+            median = median(.estimate),
+            max = max(.estimate),
+            mean = mean(.estimate),
+            sd = sd(.estimate))
+```
+
+#### 2.4.4 Hyper parameter tuning in `tidymodels`\*
+
+**Set up model to label hyper parameters to be tuned**
+
+```{r}
+dt_tune_model = decision_tree(cost_complexity = tune(),
+                               tree_depth = tune(),
+                              min_n = tune()) %>%
+  set_engine('rpart') %>%
+  set_mode('classification')
+dt_tune_model
+
+leads_tune_wkfl = leads_wkfl %>%
+  update_model(dt_tune_model)
+leads_tune_wkfl
+```
+
+**Grid search - random**
+
+```{r}
+set.seed(214)
+dt_grid = grid_random(parameters(dt_tune_model),size = 5)
+
+dt_tuning = leads_tune_wkfl %>%
+             tune_grid(resamples = leads_folds,
+                       grid = dt_grid,
+                       metrics = leads_metrics)
+
+## Overall exploration of results
+# dt_tuning %>%
+#   collect_metrics()
+
+dt_tuning %>%
+  collect_metrics(summarize = FALSE) %>%
+  filter(.metric == 'roc_auc') %>%
+  group_by(id) %>%
+  summarize(min_roc_auc = min(.estimate),
+            median_roc_auc = median(.estimate),
+            max_roc_auc = max(.estimate))
+```
+
+**Grid search - regular**
+```{r,eval=FALSE}
+dt_grid = grid_regular(parameters(dt_tune_model),levels = 3)
+```
+
+
+**Show and select best model**
+
+```{r}
+# Display the best model from tuning
+dt_tuning %>% show_best(metric = 'roc_auc', n = 5)
+
+# select the best model
+best_dt_model = dt_tuning %>%
+  select_best(metric = 'roc_auc')
+best_dt_model
+
+# Finalize the workflow
+final_leads_wkfl = leads_tune_wkfl %>%
+  finalize_workflow(best_dt_model)
+final_leads_wkfl
+
+leads_final_fit = final_leads_wkfl %>%
+  last_fit(split = leads_split)
+leads_final_fit %>%
+  collect_metrics()
+```
+
+------------------------------------------------------------------------
+
+<center> ## The full end-to-end procedure with workflow </center>
+```{r fulltidymodel, eval=FALSE}
+# A full picture
+rm(list = ls())
+
+# 1. Split training and testing
+leads_split = initial_split(leads_df,strata = purchased)
+leads_training = leads_split %>%
+  training()
+leads_test = leads_split %>%
+  testing()
+
+# 2. Initial model set up and indicate parameters to be tuned
+dt_tune_model = decision_tree(cost_complexity = tune(),
+                              tree_depth = tune(),
+                              min_n = tune()) %>%
+  set_engine('rpart') %>%
+  set_mode('classification')
+
+leads_metrics = metric_set(roc_auc, sens, spec)
+
+# 3. Set up the recipe
+leads_recipe = recipe(purchased ~ .,
+                      data = leads_training) %>%
+  step_corr(all_numeric(), threshold = 0.9) %>%
+  step_normalize(all_numeric()) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+
+# 4. Create the cross validation
+leads_folds = vfold_cv(leads_training,
+                       v = 10,
+                       strata = purchased)
+
+# 5. Create the ML workflow
+leads_tune_wkfl = workflow() %>%
+  add_model(dt_tune_model) %>%
+  add_recipe(leads_recipe)
+
+
+
+# 6. Grid search tuning
+dt_grid = grid_random(extract_parameter_set_dials(dt_tune_model),size = 5)
+
+dt_tuning = leads_tune_wkfl %>%
+  tune_grid(resamples = leads_folds,
+            grid = dt_grid,
+            metrics = leads_metrics)
+
+# 7. Evaluate the grid search
+dt_tuning %>%
+  collect_metrics(summarize = FALSE) %>%
+  filter(.metric == 'roc_auc') %>%
+  group_by(id) %>%
+  summarize(min_roc_auc = min(.estimate),
+            median_roc_auc = median(.estimate),
+            max_roc_auc = max(.estimate))
+
+# 8. Select the best model
+best_dt_model = dt_tuning %>%
+  select_best(metric = 'roc_auc')
+
+# 9. Finalize the workflow
+final_leads_wkfl = leads_tune_wkfl %>%
+  finalize_workflow(best_dt_model)
+final_leads_wkfl
+
+# 10. Apply the model to the test data and evaluate the test set performance
+leads_final_fit = final_leads_wkfl %>%
+  last_fit(split = leads_split)
+
+conf_mat(leads_final_fit$.predictions[[1]],truth = purchased,
+           estimate = .pred_class) %>% summary()
+
+leads_final_fit %>% collect_metrics()
+```
+
+
+
+------------------------------------------------------------------------
+
+<center> ## The full end-to-end procedure without workflow </center>
+```{r fulltidymodelno, eval=FALSE}
+# A full picture
+
+# 1. Split training and testing
+leads_split = initial_split(leads_df,strata = purchased)
+leads_training = leads_split %>%
+  training()
+leads_test = leads_split %>%
+  testing()
+
+# 2. Set up the tuning specs
+boost_spec = boost_tree(
+  trees = 500,
+  learn_rate = tune(),
+  tree_depth = tune(),
+  sample_size = tune()) %>%
+  set_mode("classification") %>%
+  set_engine("xgboost")
+
+# 3. Create the tuning grid
+tunegrid_boost =  grid_regular(extract_parameter_set_dials(boost_spec),
+                               levels = 2)
+
+# 4. Tuning
+tune_results = tune_grid(
+  boost_spec,
+  purchased ~ .,
+  resamples = vfold_cv(leads_training, v = 6),
+  grid = tunegrid_boost,
+  metrics = metric_set(roc_auc))
+
+# 5. Visualize the results
+autoplot(tune_results)
+
+# 6. Finalize the model
+best_params =  select_best(tune_results)
+final_spec =  finalize_model(boost_spec,
+                             best_params)
+
+# 7. Train the final model
+final_model = final_spec %>% fit(formula = purchased ~ .,
+                                 data = leads_training)
+
+# 8. Testing prediction
+predictions = predict(final_model,leads_test, type = "class") %>%
+  bind_cols(leads_test) %>% 
+  
+
+predictions = leads_test %>% select(purchased) %>%
+  bind_cols(predict(final_model,leads_test, type = "class"),
+            predict(final_model,leads_test, type = "prob"))
+
+```
 
 ## 4. Machine learning with `caret`
 
