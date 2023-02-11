@@ -19,24 +19,12 @@ author: Junrui Di, Ph.D.
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   warning = FALSE,
-  message = FALSE,
-  cache = TRUE
+  message = FALSE
+  # cache = TRUE
 )
 ```
 
-<!-- ## 1. `tidymodels` ecosystem -->
 
-<!-- `tidymodels` provide a complete framework for  -->
-
-<!-- * Data resampling, i.e. training and testing split (`resample``) -->
-
-<!-- * Feature engineering (`recipes``) -->
-
-<!-- * Model fitting (`parsnip`) -->
-
-<!-- * Model tuning (`tune` and `dials`) -->
-
-<!-- * Model evaluation (`yardstick`) -->
 
 ## 1. Basic modeling in `tidyverse`
 
@@ -64,7 +52,7 @@ Before even going to `tidymodel`, the `tidyverse` packages provide ways to strea
 library(tidyverse)
 library(tidymodels)
 
-gapminder = readRDS("D:/Dropbox/Coursework/Machine Learning in R/Machine Learning in the Tidyverse/datasets/gapminder.rds")
+gapminder = readRDS("~/Dropbox/Coursework/Machine Learning in R/Machine Learning in the Tidyverse/datasets/gapminder.rds")
 
 ## Step one is to make a list column based on the grouping variable
 nested = gapminder %>% group_by(country) %>% nest()
@@ -179,7 +167,7 @@ knitr::kable(cv_model_tunerf %>%
 ### 1.4 A logistic regression model using `tidyverse` for **classification**
 
 ```{r logtune}
-attrtion = readRDS("D:/Dropbox/Coursework/Machine Learning in R/Machine Learning in the Tidyverse/datasets/attrition.rds")
+attrtion = readRDS("~/Dropbox/Coursework/Machine Learning in R/Machine Learning in the Tidyverse/datasets/attrition.rds")
 
 attrtion_split = initial_split(attrtion, prop = 0.75)
 training_data = training(attrtion_split)
@@ -203,7 +191,7 @@ cv_models_lr_pred = cv_models_lr %>%
     validate_predicted = map2(.x = model, .y = validate, ~predict(.x, .y, type = "response")> 0.5 )
   ) %>%
   mutate(
-    # Calculate accurarcy
+    # Calculate accuracy and recall
     Accuracy = map2(.x =validate_actual, .y = validate_predicted,  ~accuracy(.x,.y)),
     Recall = map2(.x =validate_actual, .y = validate_predicted,  ~recall(.x,.y))
   ) %>%
@@ -320,7 +308,7 @@ lm_last_fit %>% collect_predictions()
 ### 2.2 Classification
 
 ```{r leaddfdata}
-leads_df = readRDS("D:/Dropbox/Coursework/Machine Learning in R/Modeling with tidymodels in R/datasets/leads_df.rds")
+leads_df = readRDS("~/Dropbox/Coursework/Machine Learning in R/Modeling with tidymodels in R/datasets/leads_df.rds")
 leads_split = initial_split(leads_df,prop = 0.75,strata = purchased)
 leads_training = leads_split %>% training()
 leads_test =  leads_split %>%testing()
@@ -679,10 +667,10 @@ dt_tuning %>%
 ```
 
 **Grid search - regular**
+
 ```{r,eval=FALSE}
 dt_grid = grid_regular(parameters(dt_tune_model),levels = 3)
 ```
-
 
 **Show and select best model**
 
@@ -706,9 +694,13 @@ leads_final_fit %>%
   collect_metrics()
 ```
 
+### 2.5 Final Overall Procedure
+
+
 ------------------------------------------------------------------------
 
-<center>  The full end-to-end procedure with workflow </center>
+<center>The full end-to-end procedure with workflow</center>
+
 ```{r fulltidymodel, eval=FALSE}
 # A full picture
 rm(list = ls())
@@ -785,11 +777,10 @@ conf_mat(leads_final_fit$.predictions[[1]],truth = purchased,
 leads_final_fit %>% collect_metrics()
 ```
 
-
-
 ------------------------------------------------------------------------
 
-<center> The full end-to-end procedure without workflow </center>
+<center>The full end-to-end procedure without workflow</center>
+
 ```{r fulltidymodelno, eval=FALSE}
 # A full picture
 
@@ -861,10 +852,11 @@ final_fit %>% collect_predictions()
 ## 3. Machine learning with `caret`
 
 ### 3.1 ML set up in `caret`
+
 ```{r}
 library(caret)
 set.seed(42)
-breast_cancer_data = readr::read_csv("D:/Dropbox/Coursework/Machine Learning in R/Hyperpearameter Tuning in R/datasets/breast_cancer_data_orig.csv")
+breast_cancer_data = readr::read_csv("~/Dropbox/Coursework/Machine Learning in R/Hyperpearameter Tuning in R/datasets/breast_cancer_data_orig.csv")
 
 # Create partition index
 index = createDataPartition(breast_cancer_data$diagnosis, p = .70,
@@ -895,22 +887,18 @@ model = train(X, Y, method = "glm",
 
 ```
 
-
-
 ### 3.3 Hyper parameter tuning in `caret`
 
-Hyper parameters can be viewed:
-https://topepo.github.io/caret/available-models.html
+Hyper parameters can be viewed: <https://topepo.github.io/caret/available-models.html>
 
 ```{r}
-voters_train_data = readr::read_csv("D:/Dropbox/Coursework/Machine Learning in R/Hyperpearameter Tuning in R/datasets/voters_train_data.csv")
+voters_train_data = readr::read_csv("~/Dropbox/Coursework/Machine Learning in R/Hyperpearameter Tuning in R/datasets/voters_train_data.csv")
 
 # set up cv
 fitControl = trainControl(method = "repeatedcv", number = 3, repeats = 5)
 ```
 
-
-__Custom tuning grid__
+**Custom tuning grid**
 
 ```{r}
 man_grid = expand.grid(n.trees = c(100, 200, 250),
@@ -924,7 +912,8 @@ gbm_model_voters_grid = train(turnout16_2016 ~ .,data = voters_train_data,
                               tuneGrid = man_grid)
 ```
 
-__Grid search with range__
+**Grid search with range**
+
 ```{r}
 big_grid = expand.grid(n.trees = seq(from = 10, to = 300, by = 50),
                         interaction.depth = seq(from = 1, to = 10,
@@ -942,7 +931,8 @@ gbm_model_voters_big_grid = train(turnout16_2016 ~ .,
 ggplot(gbm_model_voters_big_grid)
 ```
 
-__Random Search__
+**Random Search**
+
 ```{r}
 fitControl = trainControl(method = "repeatedcv", number = 3, repeats = 5, search = "random")
 gbm_model_voters_random = train(turnout16_2016 ~ .,
@@ -953,8 +943,7 @@ gbm_model_voters_random = train(turnout16_2016 ~ .,
                                  tuneLength = 5)
 ```
 
-
-### 3.4 Comapring models
+### 3.4 Comapre multiple models
 
 ```{r}
 set.seed(42)
@@ -981,7 +970,6 @@ model_rf = train(diagnosis ~ .,
                   trControl = myControl
 )
 ```
-
 
 ```{r}
 # Make a list
